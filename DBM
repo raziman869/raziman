@@ -12,11 +12,12 @@
 #############################
 # Variables (Can be changed depends on your preferred values)
 # Script name
-MyScriptName='JohnFordTV-DEB10 Script'
+MyScriptName='Sigula.systems'
 
 # OpenSSH Ports
 SSH_Port1='22'
-SSH_Port2='226'
+SSH_Port2='447'
+SSH_Port2='80'
 
 # Your SSH Banner
 SSH_Banner='https://raw.githubusercontent.com/johndesu090/AutoScriptDB/master/Files/Plugins/banner'
@@ -26,12 +27,12 @@ Dropbear_Port1='445'
 Dropbear_Port2='442'
 
 # Stunnel Ports
-Stunnel_Port1='443' # through Dropbear
+Stunnel_Port1='446' # through Dropbear
 Stunnel_Port2='444' # through OpenSSH
 
 # OpenVPN Ports
-OpenVPN_TCP_Port='110'
-OpenVPN_UDP_Port='25222'
+OpenVPN_TCP_Port='443'
+OpenVPN_UDP_Port='53'
 
 # Privoxy Ports
 Privoxy_Port1='3356'
@@ -40,12 +41,13 @@ Privoxy_Port2='8086'
 # Squid Ports
 Squid_Port1='3355'
 Squid_Port2='8085'
+Squid_Port3='8080'
 
 # OpenVPN Config Download Port
 OvpnDownload_Port='85' # Before changing this value, please read this document. It contains all unsafe ports for Google Chrome Browser, please read from line #23 to line #89: https://chromium.googlesource.com/chromium/src.git/+/refs/heads/master/net/base/port_util.cc
 
 # Server local time
-MyVPS_Time='Asia/Manila'
+MyVPS_Time='Asia/Malaysia'
 #############################
 
 
@@ -569,7 +571,7 @@ function InsProxy(){
  rm -rf /etc/privoxy/config*
  
  # Creating Privoxy server config using cat eof tricks
- cat <<'myPrivoxy' > /etc/privoxy/config
+ cat <<'privoxy' > /etc/privoxy/config
 # My Privoxy Server Config
 user-manual /usr/share/doc/privoxy/user-manual
 confdir /etc/privoxy
@@ -593,7 +595,7 @@ keep-alive-timeout 5
 tolerate-pipelining 1
 socket-timeout 300
 permit-access 0.0.0.0/0 IP-ADDRESS
-myPrivoxy
+privoxy
 
  # Setting machine's IP Address inside of our privoxy config(security that only allows this machine to use this proxy server)
  sed -i "s|IP-ADDRESS|$IPADDR|g" /etc/privoxy/config
@@ -613,6 +615,68 @@ http_access allow VPN
 http_access deny all 
 http_port 0.0.0.0:Squid_Port1
 http_port 0.0.0.0:Squid_Port2
+http_port 0.0.0.0:Squid_Port3
+### Allow Headers
+request_header_access Allow allow all 
+request_header_access Authorization allow all 
+request_header_access WWW-Authenticate allow all 
+request_header_access Proxy-Authorization allow all 
+request_header_access Proxy-Authenticate allow all 
+request_header_access Cache-Control allow all 
+request_header_access Content-Encoding allow all 
+request_header_access Content-Length allow all 
+request_header_access Content-Type allow all 
+request_header_access Date allow all 
+request_header_access Expires allow all 
+request_header_access Host allow all 
+request_header_access If-Modified-Since allow all 
+request_header_access Last-Modified allow all 
+request_header_access Location allow all 
+request_header_access Pragma allow all 
+request_header_access Accept allow all 
+request_header_access Accept-Charset allow all 
+request_header_access Accept-Encoding allow all 
+request_header_access Accept-Language allow all 
+request_header_access Content-Language allow all 
+request_header_access Mime-Version allow all 
+request_header_access Retry-After allow all 
+request_header_access Title allow all 
+request_header_access Connection allow all 
+request_header_access Proxy-Connection allow all 
+request_header_access User-Agent allow all 
+request_header_access Cookie allow all 
+request_header_access All deny all
+### HTTP Anonymizer Paranoid
+reply_header_access Allow allow all 
+reply_header_access Authorization allow all 
+reply_header_access WWW-Authenticate allow all 
+reply_header_access Proxy-Authorization allow all 
+reply_header_access Proxy-Authenticate allow all 
+reply_header_access Cache-Control allow all 
+reply_header_access Content-Encoding allow all 
+reply_header_access Content-Length allow all 
+reply_header_access Content-Type allow all 
+reply_header_access Date allow all 
+reply_header_access Expires allow all 
+reply_header_access Host allow all 
+reply_header_access If-Modified-Since allow all 
+reply_header_access Last-Modified allow all 
+reply_header_access Location allow all 
+reply_header_access Pragma allow all 
+reply_header_access Accept allow all 
+reply_header_access Accept-Charset allow all 
+reply_header_access Accept-Encoding allow all 
+reply_header_access Accept-Language allow all 
+reply_header_access Content-Language allow all 
+reply_header_access Mime-Version allow all 
+reply_header_access Retry-After allow all 
+reply_header_access Title allow all 
+reply_header_access Connection allow all 
+reply_header_access Proxy-Connection allow all 
+reply_header_access User-Agent allow all 
+reply_header_access Cookie allow all 
+reply_header_access All deny all
+### CoreDump
 coredump_dir /var/spool/squid
 dns_nameservers 8.8.8.8 8.8.4.4
 refresh_pattern ^ftp: 1440 20% 10080
@@ -628,6 +692,7 @@ mySquid
  # Setting squid ports
  sed -i "s|Squid_Port1|$Squid_Port1|g" /etc/squid/squid.conf
  sed -i "s|Squid_Port2|$Squid_Port2|g" /etc/squid/squid.conf
+ sed -i "s|Squid_Port3|$Squid_Port3|g" /etc/squid/squid.conf
 
  # Starting Proxy server
  echo -e "Restarting proxy server..."
@@ -670,6 +735,7 @@ cat <<EOF15> /var/www/openvpn/gtmsnswnp.ovpn
 client
 dev tun
 proto tcp
+setenv FRIENDLY_NAME "Debian VPN WNP"
 remote $IPADDR $OpenVPN_TCP_Port
 nobind
 persist-key
@@ -717,20 +783,18 @@ cat <<EOF16> /var/www/openvpn/sun-tutcp.ovpn
 client
 dev tun
 proto tcp
+setenv FRIENDLY_NAME "Debian VPN SUN"
 remote $IPADDR $OpenVPN_TCP_Port
 remote-cert-tls server
 connect-retry infinite
 resolv-retry infinite
 nobind
-tun-mtu 1500
-mssfix 1460
 persist-key
 persist-tun
 auth-user-pass
 auth none
 auth-nocache
 cipher none
-keysize 0
 comp-lzo
 redirect-gateway def1
 setenv CLIENT_CERT 0
@@ -758,14 +822,13 @@ cat <<EOF162> /var/www/openvpn/sun-tuudp.ovpn
 client
 dev tun
 proto udp
+setenv FRIENDLY_NAME "Debian VPN SUN"
 remote $IPADDR $OpenVPN_UDP_Port
 remote-cert-tls server
 resolv-retry infinite
 float
 fast-io
 nobind
-tun-mtu 1500
-mssfix 1460
 persist-key
 persist-remote-ip
 persist-tun
@@ -773,7 +836,6 @@ auth-user-pass
 auth none
 auth-nocache
 cipher none
-keysize 0
 comp-lzo
 redirect-gateway def1
 setenv CLIENT_CERT 0
@@ -797,13 +859,11 @@ cat <<EOF17> /var/www/openvpn/sun-noload.ovpn
 client
 dev tun
 proto tcp-client
+setenv FRIENDLY_NAME "Debian VPN WNP"
 remote $IPADDR $OpenVPN_TCP_Port
 remote-cert-tls server
 bind
 float
-tun-mtu 1500
-tun-mtu-extra 32
-mssfix 1450
 mute-replay-warnings
 connect-retry-max 9999
 redirect-gateway def1
@@ -817,7 +877,6 @@ auth none
 auth-nocache
 auth-retry interact
 cipher none
-keysize 0
 comp-lzo
 reneg-sec 0
 verb 0
@@ -839,6 +898,7 @@ cat <<EOF152> /var/www/openvpn/gtmwnp.ovpn
 client
 dev tun
 proto tcp-client
+setenv FRIENDLY_NAME "Debian VPN WNP"
 remote $IPADDR $OpenVPN_TCP_Port
 nobind
 persist-key
@@ -882,6 +942,7 @@ cat <<EOF1152> /var/www/openvpn/gtmsns.ovpn
 client
 dev tun
 proto tcp-client
+setenv FRIENDLY_NAME "Debian VPN SNS"
 remote $IPADDR $OpenVPN_TCP_Port
 nobind
 persist-key
@@ -900,6 +961,7 @@ connect-retry 0 1
 nice -20
 reneg-sec 0
 redirect-gateway def1
+setenv CLIENT_CERT 0
 dhcp-option DNS 1.1.1.1
 dhcp-option DNS 1.0.0.1
 http-proxy $IPADDR $Privoxy_Port1
@@ -926,6 +988,7 @@ cat <<EOF1632> /var/www/openvpn/suntu-dns.ovpn
 client
 dev tun
 proto tcp-client
+setenv FRIENDLY_NAME "Debian VPN SUN"
 remote $IPADDR $OpenVPN_TCP_Port
 nobind
 persist-key
@@ -1053,7 +1116,7 @@ FordServ
  
 }
  #Create Admin
- useradd admin
+ useradd -m admin
  echo "admin:itangsagli" | chpasswd
 
 function ConfMenu(){
@@ -1072,12 +1135,27 @@ cd ~
 }
 
 function ScriptMessage(){
- echo -e " (｡◕‿◕｡) $MyScriptName VPS Installer"
+ echo -e " [\e[1;32m$MyScriptName VPS Installer\e[0m]"
  echo -e ""
- echo -e " Script by JohnFordTV"
+ echo -e " https://fb.com/johndesu090"
+ echo -e "[GCASH] 09206200840 [PAYPAL] johnford090@gmail.com"
  echo -e ""
 }
 
+function InstBadVPN(){
+ # Pull BadVPN Binary 64bit or 32bit
+if [ "$(getconf LONG_BIT)" == "64" ]; then
+ wget -O /usr/bin/badvpn-udpgw "https://github.com/johndesu090/AutoScriptDB/raw/master/Files/Plugins/badvpn-udpgw64"
+else
+ wget -O /usr/bin/badvpn-udpgw "https://github.com/johndesu090/AutoScriptDB/raw/master/Files/Plugins/badvpn-udpgw"
+fi
+ # Set BadVPN to Start on Boot via .profile
+ sed -i '$ i\screen -AmdS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7300' /root/.profile
+ # Change Permission to make it Executable
+ chmod +x /usr/bin/badvpn-udpgw
+ # Start BadVPN via Screen
+ screen -AmdS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7300
+}
 
 
 #############################################
@@ -1094,7 +1172,7 @@ function ScriptMessage(){
  source /etc/os-release
 if [[ "$ID" != 'debian' ]]; then
  ScriptMessage
- echo -e "[\e[1;31mError\e[0m] This script is for Debian only, exting..." 
+ echo -e "[\e[1;31mError\e[0m] This script is for Debian only, exiting..." 
  exit 1
 fi
 
@@ -1125,6 +1203,10 @@ fi
  # Configure Stunnel
  echo -e "Configuring stunnel..."
  InsStunnel
+ 
+ # Configure BadVPN UDPGW
+ echo -e "Configuring BadVPN UDPGW..."
+ InstBadVPN
  
  # Configure Webmin
  echo -e "Configuring webmin..."
@@ -1193,10 +1275,11 @@ echo "   - IPv6        : [OFF]"  | tee -a log-install.txt
 echo ""  | tee -a log-install.txt
 echo "Application & Port Information"  | tee -a log-install.txt
 echo "   - OpenVPN		: TCP $OpenVPN_TCP_Port UDP $OpenVPN_UDP_Port "  | tee -a log-install.txt
-echo "   - OpenSSH  	: $SSH_Port1, $SSH_Port2 "  | tee -a log-install.txt
+echo "   - OpenSSH		: $SSH_Port1, $SSH_Port2 "  | tee -a log-install.txt
 echo "   - Dropbear		: $Dropbear_Port1, $Dropbear_Port2"  | tee -a log-install.txt
 echo "   - Stunnel/SSL 	: $Stunnel_Port1, $Stunnel_Port2"  | tee -a log-install.txt
 echo "   - Squid Proxy	: $Squid_Port1 , $Squid_Port2 (limit to IP Server)"  | tee -a log-install.txt
+echo "   - Squid ELITE	: $Squid_Port3 (limit to IP Server)"  | tee -a log-install.txt
 echo "   - Privoxy		: $Privoxy_Port1 , $Privoxy_Port2 (limit to IP Server)"  | tee -a log-install.txt
 echo ""  | tee -a log-install.txt
 echo ""  | tee -a log-install.txt
@@ -1208,6 +1291,10 @@ echo "Important Information"  | tee -a log-install.txt
 echo "   - Installation Log        : cat /root/log-install.txt"  | tee -a log-install.txt
 echo ""  | tee -a log-install.txt
 echo "   - Webmin                  : http://$IPADDR:10000/"  | tee -a log-install.txt
+echo ""  | tee -a log-install.txt
+echo ""  | tee -a log-install.txt
+echo "OpenVPN Configs Download"  | tee -a log-install.txt
+echo "   - Download Link           : http://$IPADDR:85/configs.zip"  | tee -a log-install.txt
 echo " ©JohnFordTV"  | tee -a log-install.txt
 echo " Facebook: https://fb.me/johndesu090"  | tee -a log-install.txt
 echo ""  | tee -a log-install.txt
@@ -1217,5 +1304,5 @@ echo " Please Reboot your VPS"
  # Clearing all logs from installation
  rm -rf /root/.bash_history && history -c && echo '' > /var/log/syslog
 
-rm -f DB*
+rm -f DBE*
 exit 1
